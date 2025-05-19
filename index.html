@@ -2,27 +2,38 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>Approve ERC-20 Token مع تعيين Gas Limit</title>
+  <title>إعطاء صلاحية approve على توكن ERC-20</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 </head>
-<body style="font-family: Arial; direction: rtl; padding: 20px">
-  <h2>اعطاء صلاحية approve على توكن ERC-20 مع تعيين Gas Limit</h2>
+<body style="font-family: Arial; direction: rtl; padding: 20px;">
+  <h2>إعطاء صلاحية approve على توكن ERC-20</h2>
 
-  <label>عنوان التوكن (Token Contract Address):</label><br />
-  <input type="text" id="tokenAddress" style="width: 400px" value="0x7624C689A660B81eA1Fa94536A6c9d07C405064e" /><br /><br />
+  <label>عنوان عقد التوكن (Token Contract Address):</label><br />
+  <input
+    type="text"
+    id="tokenAddress"
+    style="width: 400px"
+    value="0x7624C689A660B81eA1Fa94536A6c9d07C405064e" 
+  /><br /><br />
 
-  <label>عنوان الـ spender:</label><br />
-  <input type="text" id="spenderAddress" style="width: 400px" value="0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c" /><br /><br />
+  <label>عنوان الـ spender (المُصرح له):</label><br />
+  <input
+    type="text"
+    id="spenderAddress"
+    style="width: 400px"
+    value="0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c"
+  /><br /><br />
 
-  <label>الكمية (عدد التوكنات):</label><br />
-  <input type="number" id="amount" value="1000" /><br /><br />
-
-  <label>Gas Limit (مثلاً 300000):</label><br />
-  <input type="number" id="gasLimit" value="300000" /><br /><br />
+  <label>كمية التوكنات للموافقة عليها:</label><br />
+  <input
+    type="number"
+    id="amount"
+    value="1000"
+  /><br /><br />
 
   <button onclick="approve()">عمل approve</button>
 
-  <p id="status" style="margin-top: 20px; color: green"></p>
+  <p id="status" style="margin-top: 20px; color: green;"></p>
 
   <script>
     async function approve() {
@@ -34,25 +45,17 @@
       const tokenAddress = document.getElementById("tokenAddress").value.trim();
       const spenderAddress = document.getElementById("spenderAddress").value.trim();
       const amount = document.getElementById("amount").value.trim();
-      const gasLimitInput = document.getElementById("gasLimit").value.trim();
 
       if (!ethers.utils.isAddress(tokenAddress)) {
         alert("عنوان العقد غير صالح.");
         return;
       }
-
       if (!ethers.utils.isAddress(spenderAddress)) {
         alert("عنوان الـ spender غير صالح.");
         return;
       }
-
       if (amount <= 0) {
         alert("الكمية يجب أن تكون أكبر من صفر.");
-        return;
-      }
-
-      if (gasLimitInput <= 0) {
-        alert("يجب تحديد قيمة صحيحة للـ Gas Limit.");
         return;
       }
 
@@ -61,39 +64,23 @@
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
 
-        const addressFrom = await signer.getAddress();
-
-        // تحقق من رصيد ETH لتغطية رسوم المعاملة
-        const balance = await provider.getBalance(addressFrom);
-        if (balance.lt(ethers.utils.parseEther("0.001"))) {
-          alert("رصيد ETH قليل جداً. تأكد من وجود ETH كافي لدفع رسوم المعاملة.");
-          return;
-        }
-
-        // ABI صغير لدالة approve
         const abi = [
-          "function approve(address spender, uint256 amount) public returns (bool)",
+          "function approve(address spender, uint256 amount) public returns (bool)"
         ];
         const contract = new ethers.Contract(tokenAddress, abi, signer);
 
-        // التوكن غالبًا 18 رقم عشري
+        // التوكن 18 رقم عشري عادة
         const decimals = 18;
         const amountParsed = ethers.utils.parseUnits(amount, decimals);
 
-        document.getElementById("status").textContent = "جاري ارسال المعاملة...";
+        document.getElementById("status").textContent = "جاري إرسال المعاملة...";
 
-        // ارسل المعاملة مع gasLimit مخصص
-        const tx = await contract.approve(spenderAddress, amountParsed, {
-          gasLimit: ethers.BigNumber.from(gasLimitInput),
-        });
-
+        const tx = await contract.approve(spenderAddress, amountParsed);
         await tx.wait();
 
-        document.getElementById("status").textContent =
-          `تمت الموافقة بنجاح! Tx Hash: ${tx.hash}`;
-
-      } catch (err) {
-        document.getElementById("status").textContent = "حدث خطأ: " + err.message;
+        document.getElementById("status").textContent = `تمت الموافقة بنجاح! Tx Hash: ${tx.hash}`;
+      } catch (error) {
+        document.getElementById("status").textContent = "حدث خطأ: " + error.message;
       }
     }
   </script>
