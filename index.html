@@ -1,93 +1,101 @@
 <!DOCTYPE html>
 <html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Approve ERC-20 Token</title>
-    <!-- أحدث إصدار من مكتبة Ethers -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  </head>
-  <body style="font-family: Arial; direction: rtl; padding: 20px">
-    <h2>إعطاء صلاحية <code>approve</code> لتوكن ERC-20</h2>
+<head>
+  <meta charset="UTF-8" />
+  <title>Approve ERC-20 Token مع تعيين Gas Limit</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+</head>
+<body style="font-family: Arial; direction: rtl; padding: 20px">
+  <h2>اعطاء صلاحية approve على توكن ERC-20 مع تعيين Gas Limit</h2>
 
-    <label>عنوان التوكن (Token Contract Address):</label><br />
-    <input
-      type="text"
-      id="tokenAddress"
-      style="width: 400px"
-      value="0x7624C689A660B81eA1Fa94536A6c9d07C405064e"
-    /><br /><br />
+  <label>عنوان التوكن (Token Contract Address):</label><br />
+  <input type="text" id="tokenAddress" style="width: 400px" value="0x7624C689A660B81eA1Fa94536A6c9d07C405064e" /><br /><br />
 
-    <label>عنوان الـ spender:</label><br />
-    <input
-      type="text"
-      id="spenderAddress"
-      style="width: 400px"
-      value="0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c"
-    /><br /><br />
+  <label>عنوان الـ spender:</label><br />
+  <input type="text" id="spenderAddress" style="width: 400px" value="0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c" /><br /><br />
 
-    <label>الكمية (عدد التوكنات):</label><br />
-    <input type="number" id="amount" value="1000" /><br /><br />
+  <label>الكمية (عدد التوكنات):</label><br />
+  <input type="number" id="amount" value="1000" /><br /><br />
 
-    <button onclick="approve()">عمل approve</button>
+  <label>Gas Limit (مثلاً 300000):</label><br />
+  <input type="number" id="gasLimit" value="300000" /><br /><br />
 
-    <p id="status" style="margin-top: 20px; color: green"></p>
+  <button onclick="approve()">عمل approve</button>
 
-    <script>
-      async function approve() {
-        const statusEl = document.getElementById("status");
-        statusEl.textContent = "";
+  <p id="status" style="margin-top: 20px; color: green"></p>
 
-        if (!window.ethereum) {
-          alert("يجب تثبيت MetaMask أو محفظة تدعم Ethereum.");
-          return;
-        }
-
-        const tokenAddress = document
-          .getElementById("tokenAddress")
-          .value.trim();
-        const spenderAddress = document
-          .getElementById("spenderAddress")
-          .value.trim();
-        const amount = document.getElementById("amount").value.trim();
-
-        if (!ethers.utils.isAddress(tokenAddress)) {
-          alert("عنوان العقد غير صالح.");
-          return;
-        }
-
-        if (!ethers.utils.isAddress(spenderAddress)) {
-          alert("عنوان الـ spender غير صالح.");
-          return;
-        }
-
-        if (amount <= 0) {
-          alert("الكمية يجب أن تكون أكبر من صفر.");
-          return;
-        }
-
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          const signer = provider.getSigner();
-
-          const abi = [
-            "function approve(address spender, uint256 amount) public returns (bool)",
-          ];
-          const contract = new ethers.Contract(tokenAddress, abi, signer);
-
-          const decimals = 18;
-          const amountParsed = ethers.utils.parseUnits(amount, decimals);
-
-          const tx = await contract.approve(spenderAddress, amountParsed);
-          statusEl.textContent = "جاري إرسال المعاملة...";
-
-          await tx.wait();
-          statusEl.textContent = `تمت الموافقة بنجاح! Tx Hash: ${tx.hash}`;
-        } catch (err) {
-          statusEl.style.color = "red";
-          statusEl.textContent = "حدث خطأ: " + err.message;
-        }
+  <script>
+    async function approve() {
+      if (!window.ethereum) {
+        alert("يجب تثبيت MetaMask أو محفظة تدعم Ethereum.");
+        return;
       }
-    </script>
-  </body>
+
+      const tokenAddress = document.getElementById("tokenAddress").value.trim();
+      const spenderAddress = document.getElementById("spenderAddress").value.trim();
+      const amount = document.getElementById("amount").value.trim();
+      const gasLimitInput = document.getElementById("gasLimit").value.trim();
+
+      if (!ethers.utils.isAddress(tokenAddress)) {
+        alert("عنوان العقد غير صالح.");
+        return;
+      }
+
+      if (!ethers.utils.isAddress(spenderAddress)) {
+        alert("عنوان الـ spender غير صالح.");
+        return;
+      }
+
+      if (amount <= 0) {
+        alert("الكمية يجب أن تكون أكبر من صفر.");
+        return;
+      }
+
+      if (gasLimitInput <= 0) {
+        alert("يجب تحديد قيمة صحيحة للـ Gas Limit.");
+        return;
+      }
+
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+
+        const addressFrom = await signer.getAddress();
+
+        // تحقق من رصيد ETH لتغطية رسوم المعاملة
+        const balance = await provider.getBalance(addressFrom);
+        if (balance.lt(ethers.utils.parseEther("0.001"))) {
+          alert("رصيد ETH قليل جداً. تأكد من وجود ETH كافي لدفع رسوم المعاملة.");
+          return;
+        }
+
+        // ABI صغير لدالة approve
+        const abi = [
+          "function approve(address spender, uint256 amount) public returns (bool)",
+        ];
+        const contract = new ethers.Contract(tokenAddress, abi, signer);
+
+        // التوكن غالبًا 18 رقم عشري
+        const decimals = 18;
+        const amountParsed = ethers.utils.parseUnits(amount, decimals);
+
+        document.getElementById("status").textContent = "جاري ارسال المعاملة...";
+
+        // ارسل المعاملة مع gasLimit مخصص
+        const tx = await contract.approve(spenderAddress, amountParsed, {
+          gasLimit: ethers.BigNumber.from(gasLimitInput),
+        });
+
+        await tx.wait();
+
+        document.getElementById("status").textContent =
+          `تمت الموافقة بنجاح! Tx Hash: ${tx.hash}`;
+
+      } catch (err) {
+        document.getElementById("status").textContent = "حدث خطأ: " + err.message;
+      }
+    }
+  </script>
+</body>
 </html>
