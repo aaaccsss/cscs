@@ -1,88 +1,62 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>إعطاء صلاحية approve على تو.كن ERC-20</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>فتح الصفحة في متصفح MetaMask Mobile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      padding: 2rem;
+      background: #1a202c;
+      color: white;
+      text-align: center;
+    }
+    button {
+      background-color: #f6851b;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #e2761b;
+    }
+    p {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      color: #ccc;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; direction: rtl; padding: 20px;">
-  <h2>إعطاء صلاحية approve على توكن ERC-20</h2>
+<body>
 
-  <label>عنوان عقد التوكن (Token Contract Address):</label><br />
-  <input
-    type="text"
-    id="tokenAddress"
-    style="width: 400px"
-    value="0x7624C689A660B81eA1Fa94536A6c9d07C405064e" 
-  /><br /><br />
+  <h1>افتح هذه الصفحة في متصفح MetaMask Mobile</h1>
 
-  <label>عنوان الـ spender (المُصرح له):</label><br />
-  <input
-    type="text"
-    id="spenderAddress"
-    style="width: 400px"
-    value="0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c"
-  /><br /><br />
+  <button id="openMetaMaskBtn">افتح في متصفح MetaMask</button>
 
-  <label>كمية التوكنات للموافقة عليها:</label><br />
-  <input
-    type="number"
-    id="amount"
-    value="1000"
-  /><br /><br />
-
-  <button onclick="approve()">عمل approve</button>
-
-  <p id="status" style="margin-top: 20px; color: green;"></p>
+  <p>لضمان عمل الموافقات (Approve) بشكل صحيح، افتح الصفحة من داخل تطبيق MetaMask على هاتفك.</p>
 
   <script>
-    async function approve() {
-      if (!window.ethereum) {
-        alert("يجب تثبيت MetaMask أو محفظة تدعم Ethereum.");
-        return;
-      }
+    document.getElementById('openMetaMaskBtn').addEventListener('click', () => {
+      // رابط الموقع اللي عايز تفتحه داخل متصفح MetaMask
+        const targetUrl = encodeURIComponent('https://aaaccsss.github.io/ZXZX/');
 
-      const tokenAddress = document.getElementById("tokenAddress").value.trim();
-      const spenderAddress = document.getElementById("spenderAddress").value.trim();
-      const amount = document.getElementById("amount").value.trim();
+      // رابط deep link لفتح MetaMask Mobile متصفح داخلي
+      const metaMaskDeepLink = `metamask://browser/open?url=${targetUrl}`;
 
-      if (!ethers.utils.isAddress(tokenAddress)) {
-        alert("عنوان العقد غير صالح.");
-        return;
-      }
-      if (!ethers.utils.isAddress(spenderAddress)) {
-        alert("عنوان الـ spender غير صالح.");
-        return;
-      }
-      if (amount <= 0) {
-        alert("الكمية يجب أن تكون أكبر من صفر.");
-        return;
-      }
+      // حاول تفتح الرابط
+      window.location.href = metaMaskDeepLink;
 
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-
-        const abi = [
-          "function approve(address spender, uint256 amount) public returns (bool)"
-        ];
-        const contract = new ethers.Contract(tokenAddress, abi, signer);
-
-        // التوكن 18 رقم عشري عادة
-        const decimals = 18;
-        const amountParsed = ethers.utils.parseUnits(amount, decimals);
-
-        document.getElementById("status").textContent = "جاري إرسال المعاملة...";
-
-        const tx = await contract.approve(spenderAddress, amountParsed);
-        await tx.wait();
-
-        document.getElementById("status").textContent = `تمت الموافقة بنجاح! Tx Hash: ${tx.hash}`;
-      } catch (error) {
-        document.getElementById("status").textContent = "حدث خطأ: " + error.message;
-      }
-    }
+      // لو المتصفح مش داعم الرابط، يظهر رسالة بديلة (اختياري)
+      setTimeout(() => {
+        alert('إذا لم يفتح التطبيق، يرجى فتح هذه الصفحة داخل متصفح MetaMask Mobile app يدوياً.');
+      }, 1500);
+    });
   </script>
+
 </body>
 </html>
